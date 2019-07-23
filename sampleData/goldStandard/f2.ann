@@ -1,0 +1,6 @@
+T1	ADE 50 57	headache
+T2	Reason 150 162	hyponatremia
+R1	Reason-Drug Arg1:T4 Arg2:T2
+R2	Reason-Drug Arg1:T3 Arg2:T2
+T3	Drug 200 218	steroids
+T4	Drug 1000 1007	aspirin
