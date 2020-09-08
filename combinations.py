@@ -29,17 +29,17 @@ __date__ = 'July 2013'
 __author__ = 'Vincent Van Asch'
 __version__ = '1.2.0'
 
+import itertools
+from math import factorial
+from functools import reduce
+
 
 ### Helper functions #################################################
 def fact(number, bound=1):
     '''Return the faculty: number*(number-1)*(number-2)*...*bound'''
     if number < bound:
         raise ValueError('number should be equal or greater than bound')
-    
-    if number == bound:
-        return bound
-    else:
-        return number*fact(number-1, bound)
+    return factorial(number)
         
 def _next(a, numLeft, n, r, total):
     '''Calculate next step'''
@@ -51,7 +51,7 @@ def _next(a, numLeft, n, r, total):
             i=i-1
 
         a[i] = a[i] + 1
-        for j in xrange(i+1, r):
+        for j in range(i+1, r):
             a[j] = a[i] + j - i
 
         return a, numLeft-1
@@ -72,48 +72,12 @@ def ncombinations(n, r):
     if r == 0: return 1
     
     # total = fact(n, 1)/(fact(r, 1)*fact(n-r, 1)) # Don't use this because calculating fact() of high numbers gives a RuntimeError
-    return fact(n, n-r+1)/fact(r, 1)
+    return fact(n, n-r+1) / fact(r, 1)
 
-def combinations(n, r):
-    """
-    Yields all unique subsets of length r that you
-    can take from n elements. 
-    
-    n is the number of elements.
-    r is the length of the subsets.
-    """
-    # Check
-    if n < 0: raise ValueError('n should be positive.')
-    if r < 0: raise ValueError('r should be positive.')
-    if r == 0: 
-        yield ()
-        raise StopIteration
-    if r > n: raise StopIteration
-    if n < 1: raise StopIteration
-        
-    if r == n:
-        yield range(0, n)
-        raise StopIteration
-        
-    # Initialize
-    getallen = xrange(0,n)
-    a = range(r)
-    
-    # The total number of possible combinations
-    total = ncombinations(n, r)
 
-    # Produce all pairs
-    numLeft = total
-    while numLeft > 0:
-        comb=[]  
-        a, numLeft = _next(a, numLeft, n, r, total)
-        for i in a:
-            comb.append(getallen[i])
+combinations = itertools.combinations
         
-        yield comb
-        
-        
-        
+       
 def subsets(l, r):
     '''Takes a list with elements and yields all
     unique subsets of length r.
