@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-__doc__ = '''art.py -- Approximate Randomization Test
+'''art.py -- Approximate Randomization Test
 
 This script carries out a significance test on the output of an
 instance-based machine learner based on the theory of
@@ -46,26 +45,13 @@ import getopt
 import datetime
 from math import pow
 
-try:
-    from scipy.stats import binom_test
-except ImportError:
-    print >>sys.stderr, 'INFO: Could not import scipy (www.scipy.org): signtest is not available.'
-
-try:
-    import confusionmatrix
-except ImportError:
-    raise ImportError('''This script depends on confusionmatrix.py (www.clips.ua.ac.be/~vincent/software.html).
-Place the script in the same folder as the art.py script.''')
-
-try:
-    import combinations
-except ImportError:
-    raise ImportError('''This script depends on combinations.py (www.clips.ua.ac.be/~vincent/software.html).
-Place the script in the same folder as the art.py script.''')
+from scipy.stats import binom_test
+import confusionmatrix
+import combinations
 
 
 def loginfo(s): 
-    print >>sys.stderr, '%s: %s' %(time.strftime('%d/%m/%Y %H:%M:%S'), s)
+    print('%s: %s' %(time.strftime('%d/%m/%Y %H:%M:%S'), s))
 
 
 def fread(fname, index=None, sep=None, encoding='utf8'):
@@ -177,17 +163,13 @@ def signtest(gold, system1, system2):
     # bug with unequal N in binom_test
     correct = min([s1correct, s2correct])
     
-    try:
-        p = binom_test(correct, total)
-    except NameError:
-        raise NameError('Module scipy (www.scipy.org) was not imported.')
-             
-    return p
+    return binom_test(correct, total)
+
     
     
 def termsigntest(gold, system1, system2):
     '''Sign test for term extraction recall'''
-    print >>sys.stderr, 'WARNING: this function has not been validated'
+    print('WARNING: this function has not been validated')
     # True postives for only 1 system
     s1correct=0
     s2correct=0
@@ -205,15 +187,9 @@ def termsigntest(gold, system1, system2):
     # by 1 system
     total = s1correct+s2correct
     
-    try:
-        p = binom_test(s1correct, total)
-    except NameError:
-        raise NameError('Module scipy (www.scipy.org) was not imported.')
-                    
-    return p
-    
-                    
+    return binom_test(s1correct, total)
 
+    
 def getscores(gold, system, training=None):
     '''
     Takes a gold and system list and returns a dictionary with
@@ -384,7 +360,7 @@ def getprobabilities(ngecounts, N, add=1, verbose=False):
         probs[k] = prob
 
     if verbose:
-        print >>sys.stderr, 'Probabilities for accepting H0:'
+        print('Probabilities for accepting H0:')
         names = probs.keys()
         names.sort()
         for name in names:
@@ -459,9 +435,8 @@ def exactlabelingsignificance(gold, system1, system2, verbose=False, training=No
     assert set(ngecounts.keys()) == set(refdiffs.keys())
         
     # Calculate probabilities
-    probs=getprobabilities(ngecounts, N, add=0, verbose=True)
+     return getprobabilities(ngecounts, N, add=0, verbose=True)
 
-    return probs
 
 def labelingsignificance(gold, system1, system2, N=1000, verbose=False, training=None, scoring=getscores, show_probs=True, common=[], common_gold=[]):
     '''Calculate approximate randomization test for class labeling experiments
@@ -519,9 +494,7 @@ def labelingsignificance(gold, system1, system2, N=1000, verbose=False, training
     assert set(ngecounts.keys()) == set(refdiffs.keys())
 
     # Calculate probabilities
-    probs=getprobabilities(ngecounts, N, add=1, verbose=show_probs)
-
-    return probs    
+    return getprobabilities(ngecounts, N, add=1, verbose=show_probs)
     
    
 def exacttermsignificance(gold, system1, system2, verbose=False, absolute=False):
@@ -540,9 +513,11 @@ def exacttermsignificance(gold, system1, system2, verbose=False, absolute=False)
     # The number of combinations
     N=1
     for i in range(len(source)+1):
-        N+=combinations.ncombinations(len(source), i)
-    if verbose: loginfo('%d combinations' %N)
-    if N > 5000000: raise ValueError('The number of permutations is too big. Aborting.')
+        N += combinations.ncombinations(len(source), i)
+    if verbose:
+        loginfo('%d combinations' % N)
+    if N > 5000000:
+        raise ValueError('The number of permutations is too big. Aborting.')
        
     # the reference test statitsics
     refdiffs = teststatistic(gold, system1, system2, scoring=getscores2, absolute=absolute)
@@ -666,7 +641,8 @@ def getdifference(system1, system2, gold=None):
         G=False
         gold = system1[:]
     
-    if len(system1) != len(system1) != len(gold): raise ValueError('Input lists should have the same length')
+    if len(system1) != len(system1) != len(gold): 
+        raise ValueError('Input lists should have the same length')
     
     for g, s1, s2 in zip(gold, system1, system2):
         if s1!=s2:
@@ -711,9 +687,7 @@ def main(gold, system1, system2, verbose=False, N=10000, exact_threshold=20, tra
             for k in keys:
                 lines.append('  %-23s : %.4f' %(k, scores[k]))
             
-            print >>sys.stderr, '\n'.join(lines)
-        print >>sys.stderr
-        loginfo('-'*50)
+            print('\n'.join(lines))
     
     # only shuffle difference: quicker and same probability results
     gold = newgold
@@ -767,7 +741,6 @@ def main2(gold, system1, system2, verbose=False, N=1048576, absolute=True, exact
     system2 = news2
 
     if verbose:
-        print >>sys.stderr
         for i,s in enumerate([system1, system2]):
             scores = getscores2(gold, s, training=training)
             
@@ -777,9 +750,8 @@ def main2(gold, system1, system2, verbose=False, N=1048576, absolute=True, exact
             for k in keys:
                 lines.append('  %-23s : %.4f' %(k, scores[k]))
             
-            print >>sys.stderr, '\n'.join(lines)
-        print >>sys.stderr
-        loginfo('-'*50)
+            print('\n'.join(lines))
+
 
     # the number of terms that occur only in s1 or in s2
     union=system1.union(system2)
@@ -827,7 +799,6 @@ def main3(data, verbose=False, N=1048576, absolute=True):
             systems[g] += d[g]
     
     if verbose:
-        print >>sys.stderr
         for g in groups:
             s = systems[g]
             scores = scoring_func(None, s)
@@ -838,15 +809,13 @@ def main3(data, verbose=False, N=1048576, absolute=True):
             for k in keys:
                 lines.append('  %-23s : %.4f' %(k, scores[k]))
             
-            print >>sys.stderr, '\n'.join(lines)
-        print >>sys.stderr
-        loginfo('-'*50)
+            print('\n'.join(lines))
 
     # Reference
     refdiffs = teststatistic(None, systems[groups[0]], systems[groups[1]], training=None, scoring=average, absolute=absolute)
 
     if N >= 10:
-        nom = int(N/10.0)
+        nom = N // 10
     else:
         nom=1
 
@@ -950,7 +919,7 @@ probability from Yeh is 1 - 0.97995 = 0.02005
 
 if __name__ == '__main__':
     def _usage():
-        print >>sys.stderr, '''Approximate Randomization testing (version %s)
+        print('''Approximate Randomization testing (version %s))
         
 This script can be used to assess the significance for differences in recall, precision,
 f-score, and accuracy for two machine learner outputs.
@@ -1122,7 +1091,6 @@ REFERENCES
             _usage()
             sys.exit()
         if o in ('-H',):
-            print >>sys.stderr, __doc__
             sys.exit(2)
         if o in ('-s',):
             sep = a
@@ -1162,11 +1130,11 @@ REFERENCES
 
 
     if terms and not gold:
-        print >>sys.stderr, 'ERROR 2: when doing term significance testing a gold standard is needed (-c option)'
+        print('ERROR 2: when doing term significance testing a gold standard is needed (-c option)')
         sys.exit(1)
 
     if mbt and not gold:
-        print >>sys.stderr, 'ERROR 3: when doing MBT significance testing a gold standard is needed (-c option)'
+        print('ERROR 3: when doing MBT significance testing a gold standard is needed (-c option)')
         sys.exit(1)
 
     # Reading in the class labels 
@@ -1187,13 +1155,13 @@ REFERENCES
         try:
             goldlabels = fread(output1, index=-2, sep=sep)
         except IndexError:
-            print >>sys.stderr, 'ERROR 4: Is the feature separator set correctly? (option -s is currently "%s")' %str(sep)
+            print('ERROR 4: Is the feature separator set correctly? (option -s is currently "%s")' %str(sep))
             sys.exit(1)
         check = fread(output2, index=-2, sep=sep)
         
         if check != goldlabels:
             print check, goldlabels
-            print >>sys.stderr, 'ERROR 5: File %s and %s should have the same gold reference labels.' %(output1, output2)
+            print('ERROR 5: File %s and %s should have the same gold reference labels.' %(output1, output2))
             sys.exit(1)
         del check
         
@@ -1201,7 +1169,7 @@ REFERENCES
         check2 = fread(output2, index=(0,-1), sep=sep)
         
         if check1 != check2:
-            print >>sys.stderr, 'ERROR 5: File %s and %s should be exactly the same up until the predicted class label.' %(output1, output2)
+            print('ERROR 5: File %s and %s should be exactly the same up until the predicted class label.' %(output1, output2))
             sys.exit(1)
         del check1, check2
             
@@ -1250,33 +1218,11 @@ REFERENCES
     
     
     
-    # Run
-    try:
-        if gold and mbt:
-            probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbt)
-            #probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbtmulti)
-        elif gold and terms:
-            probs = main2(goldlabels, system1, system2, N=N, verbose=verbose, absolute=absolute, exact_threshold=exact_threshold)
-        else:
-            probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=training) #, scoring=getscoresmbtmulti)
-    except Exception, e:
-        raise
-        print >>sys.stderr, 'ERROR 1: %s' %(e.message)
-        sys.exit(1)
-    
-                
-              
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
+
+    if gold and mbt:
+        probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbt)
+        #probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbtmulti)
+    elif gold and terms:
+        probs = main2(goldlabels, system1, system2, N=N, verbose=verbose, absolute=absolute, exact_threshold=exact_threshold)
+    else:
+        probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=training) #, scoring=getscoresmbtmulti)
