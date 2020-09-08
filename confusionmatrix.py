@@ -1144,7 +1144,7 @@ def getConfusionMatrixFromIterator(iterator, training_iterator=None , encoding=e
             if translation:
                 try:
                     labels = [translation[l] for l in labels]
-                except KeyError, e:
+                except KeyError as e:
                     raise KeyError('"%s" is not present in translation' %(e.args[0].encode(encoding)))
         
             cm.add_training(labels)
@@ -1154,7 +1154,7 @@ def getConfusionMatrixFromIterator(iterator, training_iterator=None , encoding=e
             try:
                 gold_labels = [translation[l] for l in gold_labels]
                 pred_labels = [translation[l] for l in pred_labels]
-            except KeyError, e:
+            except KeyError as e:
                 raise KeyError('"%s" is not present in translation' %(e.args[0].encode(encoding)))
         cm.add(gold_labels, pred_labels)
         
@@ -1230,8 +1230,8 @@ def main(test_file, gold_index=-2, pred_index=-1, fsep=None, lsep='_', ignore=[]
       
     # Extra info
     if verbose:
-        print '\n%s\n' %('='*80)
-        print 'STATISTICS'
+        print('\n%s\n' %('='*80))
+        print('STATISTICS')
         
         k=''
         if cm.ng < 10:

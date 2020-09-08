@@ -364,7 +364,7 @@ def getprobabilities(ngecounts, N, add=1, verbose=False):
         names = probs.keys()
         names.sort()
         for name in names:
-            print '  %-23s: %.5g' %(name, probs[name])
+            print('  %-23s: %.5g' %(name, probs[name]))
 
     return probs
 
@@ -435,7 +435,7 @@ def exactlabelingsignificance(gold, system1, system2, verbose=False, training=No
     assert set(ngecounts.keys()) == set(refdiffs.keys())
         
     # Calculate probabilities
-     return getprobabilities(ngecounts, N, add=0, verbose=True)
+    return getprobabilities(ngecounts, N, add=0, verbose=True)
 
 
 def labelingsignificance(gold, system1, system2, N=1000, verbose=False, training=None, scoring=getscores, show_probs=True, common=[], common_gold=[]):
@@ -913,7 +913,7 @@ probability from Yeh is 1 - 0.97995 = 0.02005
         for i in range(9):
             f.write('two%d\n' %(i)) # spurious retrieved by system1
         
-    print 'Written:', gold, s1, s2
+    print('Written:', gold, s1, s2)
 
 # ==================================================================================================================
 
@@ -1064,10 +1064,8 @@ REFERENCES
     Alexander Yeh, More accurate tests for the statistical significance of result differences, in: Proceedings of the 18th International Conference on Computational Linguistics, Volume 2, pages 947-953, 2000.
 
 %s, %s
-''' %(__version__, __author__, __date__)
-        
-        
-        
+''')
+         
     try:
         opts,args=getopt.getopt(sys.argv[1:],'hHc:s:vn:t:T:ram', ['help', 'yeh'])
     except getopt.GetoptError:
@@ -1160,7 +1158,7 @@ REFERENCES
         check = fread(output2, index=-2, sep=sep)
         
         if check != goldlabels:
-            print check, goldlabels
+            print(check, goldlabels)
             print('ERROR 5: File %s and %s should have the same gold reference labels.' %(output1, output2))
             sys.exit(1)
         del check
