@@ -51,7 +51,7 @@ import combinations
 
 
 def loginfo(s): 
-    print('%s: %s' %(time.strftime('%d/%m/%Y %H:%M:%S'), s))
+    print(('%s: %s' %(time.strftime('%d/%m/%Y %H:%M:%S'), s)))
 
 
 def fread(fname, index=None, sep=None, encoding='utf8'):
@@ -95,7 +95,7 @@ def strata_read(fname, sep=None, encoding='utf8'):
                 group = parts[1]
                 data = [float(x) for x in parts[2:]]
                 
-                if stratum in out.keys():
+                if stratum in list(out.keys()):
                     out[stratum][group] = data
                 else:
                     out[stratum] = {group:data}
@@ -214,7 +214,7 @@ def getscores(gold, system, training=None):
 
     # Add training
     if training:
-        for k, v in training.items():
+        for k, v in list(training.items()):
             for i in range(v):
                 cm.add_training([k])
     
@@ -315,7 +315,7 @@ def teststatistic(gold, system1, system2, training=None, scoring=getscores, abso
 
     # Compute the differences between system1 and system2
     diffs={}
-    for k in set(scores1.keys()+scores2.keys()):
+    for k in set(list(scores1.keys())+list(scores2.keys())):
         diff = scores1.get(k, 0)-scores2.get(k, 0)
         if absolute: diff = abs(diff)
     
@@ -355,16 +355,16 @@ def getprobabilities(ngecounts, N, add=1, verbose=False):
     '''
     # Calculate probabilities
     probs={}
-    for k, nge in ngecounts.items():
+    for k, nge in list(ngecounts.items()):
         prob = (nge + add)/float(N + add)
         probs[k] = prob
 
     if verbose:
         print('Probabilities for accepting H0:')
-        names = probs.keys()
+        names = list(probs.keys())
         names.sort()
         for name in names:
-            print('  %-23s: %.5g' %(name, probs[name]))
+            print(('  %-23s: %.5g' %(name, probs[name])))
 
     return probs
 
@@ -423,12 +423,12 @@ def exactlabelingsignificance(gold, system1, system2, verbose=False, training=No
         
         if verbose and not (count%nom): loginfo('Calculated permutation %d/%d' %(count, N))
         
-        for k in refdiffs.keys():
+        for k in list(refdiffs.keys()):
             pseudo = diffs[k]
             actual = refdiffs[k]
             if pseudo >= actual:
                 ngecounts[k] = ngecounts.get(k, 0) + 1
-            elif k not in ngecounts.keys():
+            elif k not in list(ngecounts.keys()):
                 ngecounts[k]=0
                     
     assert count == N
@@ -471,12 +471,12 @@ def labelingsignificance(gold, system1, system2, N=1000, verbose=False, training
         diffs = teststatistic(gold+common_gold, shuffle1+common, shuffle2+common, training=training, scoring=scoring)
         
         # see whether the shuffled system performs better than the originals
-        for k in refdiffs.keys():
+        for k in list(refdiffs.keys()):
             pseudo = diffs[k]
             actual = refdiffs[k]
             if pseudo >= actual:
                 ngecounts[k] = ngecounts.get(k, 0) + 1
-            elif k not in ngecounts.keys():
+            elif k not in list(ngecounts.keys()):
                 ngecounts[k]=0
                 
         if verbose and not ((i+1)%nom):
@@ -484,7 +484,7 @@ def labelingsignificance(gold, system1, system2, N=1000, verbose=False, training
             #getprobabilities(ngecounts, i+1, add=1, verbose=True)
     
     # Sign test check
-    if scoring.func_name == 'getscores':
+    if scoring.__name__ == 'getscores':
         try:
             s = signtest(gold, system1, system2)
             if verbose: loginfo('Sign-test probability: %.4g' %s)
@@ -545,12 +545,12 @@ def exacttermsignificance(gold, system1, system2, verbose=False, absolute=False)
             diffs = teststatistic(gold, set(shuffle1+doubles), set(shuffle2+doubles), scoring=getscores2, absolute=absolute)
        
             # see whether the shuffled system performs better than the originals
-            for k in refdiffs.keys():
+            for k in list(refdiffs.keys()):
                 pseudo = diffs[k]
                 actual = refdiffs[k]
                 if pseudo >= actual:
                     ngecounts[k] = ngecounts.get(k, 0) + 1
-                elif k not in ngecounts.keys():
+                elif k not in list(ngecounts.keys()):
                     ngecounts[k]=0
                 
             if verbose and not ((count)%nom):
@@ -601,12 +601,12 @@ def termsignificance(gold, system1, system2, N=10000, verbose=False, absolute=Fa
         diffs = teststatistic(gold, shuffle1.union(doubles), shuffle2.union(doubles), scoring=getscores2, absolute=absolute)
 
         # see whether the shuffled system performs better than the originals
-        for k in refdiffs.keys():
+        for k in list(refdiffs.keys()):
             pseudo = diffs[k]
             actual = refdiffs[k]
             if pseudo >= actual:
                 ngecounts[k] = ngecounts.get(k, 0) + 1
-            elif k not in ngecounts.keys():
+            elif k not in list(ngecounts.keys()):
                 ngecounts[k]=0
             
         if not ((i+1)%nom):
@@ -682,12 +682,12 @@ def main(gold, system1, system2, verbose=False, N=10000, exact_threshold=20, tra
             scores = scoring(gold, s, training=training)
             
             lines=['Scores for system%d:' %(i+1)]
-            keys = scores.keys()
+            keys = list(scores.keys())
             keys.sort()
             for k in keys:
                 lines.append('  %-23s : %.4f' %(k, scores[k]))
             
-            print('\n'.join(lines))
+            print(('\n'.join(lines)))
     
     # only shuffle difference: quicker and same probability results
     gold = newgold
@@ -745,12 +745,12 @@ def main2(gold, system1, system2, verbose=False, N=1048576, absolute=True, exact
             scores = getscores2(gold, s, training=training)
             
             lines=['Scores for system%d:' %(i+1)]
-            keys = scores.keys()
+            keys = list(scores.keys())
             keys.sort()
             for k in keys:
                 lines.append('  %-23s : %.4f' %(k, scores[k]))
             
-            print('\n'.join(lines))
+            print(('\n'.join(lines)))
 
 
     # the number of terms that occur only in s1 or in s2
@@ -775,12 +775,12 @@ def main3(data, verbose=False, N=1048576, absolute=True):
     '''For stratified shuffling'''
     # The groups
     scoring_func=average
-    groups = data[data.keys()[0]].keys()
+    groups = list(data[list(data.keys())[0]].keys())
     groups.sort()
     assert len(groups) == 2
     
     if verbose:
-        strata = data.keys()
+        strata = list(data.keys())
         strata.sort()
         stext = 'a'
         if len(strata) == 1: stext='um'
@@ -794,7 +794,7 @@ def main3(data, verbose=False, N=1048576, absolute=True):
         loginfo('-'*50)
     
     systems={groups[0]:[], groups[1]:[]}
-    for stratum, d in data.items():
+    for stratum, d in list(data.items()):
         for g in groups:
             systems[g] += d[g]
     
@@ -804,12 +804,12 @@ def main3(data, verbose=False, N=1048576, absolute=True):
             scores = scoring_func(None, s)
             
             lines=['Scores for group %s:' %(g)]
-            keys = scores.keys()
+            keys = list(scores.keys())
             keys.sort()
             for k in keys:
                 lines.append('  %-23s : %.4f' %(k, scores[k]))
             
-            print('\n'.join(lines))
+            print(('\n'.join(lines)))
 
     # Reference
     refdiffs = teststatistic(None, systems[groups[0]], systems[groups[1]], training=None, scoring=average, absolute=absolute)
@@ -823,7 +823,7 @@ def main3(data, verbose=False, N=1048576, absolute=True):
     ngecounts={}
     for i in range(N):
         shuffled={}
-        for stratum, d in data.items():
+        for stratum, d in list(data.items()):
             values = d[groups[0]] + d[groups[1]]
             n1 = len(d[groups[0]]) 
             n2 = len(d[groups[1]])
@@ -838,13 +838,13 @@ def main3(data, verbose=False, N=1048576, absolute=True):
         diffs = teststatistic(None, shuffled[groups[0]], shuffled[groups[1]], scoring=scoring_func, absolute=absolute)
 
         # see whether the shuffled system performs better than the originals
-        for k in refdiffs.keys():
+        for k in list(refdiffs.keys()):
             pseudo = diffs[k]
             actual = refdiffs[k]
             
             if pseudo >= actual:
                 ngecounts[k] = ngecounts.get(k, 0) + 1
-            elif k not in ngecounts.keys():
+            elif k not in list(ngecounts.keys()):
                 ngecounts[k] = 0
                 
         if verbose and not ((i+1)%nom):
@@ -913,7 +913,7 @@ probability from Yeh is 1 - 0.97995 = 0.02005
         for i in range(9):
             f.write('two%d\n' %(i)) # spurious retrieved by system1
         
-    print('Written:', gold, s1, s2)
+    print(('Written:', gold, s1, s2))
 
 # ==================================================================================================================
 
@@ -1153,13 +1153,13 @@ REFERENCES
         try:
             goldlabels = fread(output1, index=-2, sep=sep)
         except IndexError:
-            print('ERROR 4: Is the feature separator set correctly? (option -s is currently "%s")' %str(sep))
+            print(('ERROR 4: Is the feature separator set correctly? (option -s is currently "%s")' %str(sep)))
             sys.exit(1)
         check = fread(output2, index=-2, sep=sep)
         
         if check != goldlabels:
-            print(check, goldlabels)
-            print('ERROR 5: File %s and %s should have the same gold reference labels.' %(output1, output2))
+            print((check, goldlabels))
+            print(('ERROR 5: File %s and %s should have the same gold reference labels.' %(output1, output2)))
             sys.exit(1)
         del check
         
@@ -1167,7 +1167,7 @@ REFERENCES
         check2 = fread(output2, index=(0,-1), sep=sep)
         
         if check1 != check2:
-            print('ERROR 5: File %s and %s should be exactly the same up until the predicted class label.' %(output1, output2))
+            print(('ERROR 5: File %s and %s should be exactly the same up until the predicted class label.' %(output1, output2)))
             sys.exit(1)
         del check1, check2
             

@@ -109,7 +109,7 @@ class RecordTrack2(object):
                     try:
                         tag_id, tag_m, tag_text = line.strip().split('\t')
                     except ValueError:
-                        print(self.path, line)
+                        print((self.path, line))
                     if len(tag_m.split(' ')) == 3:
                         tag_type, tag_start, tag_end = tag_m.split(' ')
                     elif len(tag_m.split(' ')) == 4:
@@ -117,7 +117,7 @@ class RecordTrack2(object):
                     elif len(tag_m.split(' ')) == 5:
                         tag_type, tag_start, _, _, tag_end = tag_m.split(' ')
                     else:
-                        print(self.path)
+                        print((self.path))
                         print(line)
                     tag_start, tag_end = int(tag_start), int(tag_end)
                     annotations['tags'][tag_id] = ClinicalConcept(tag_id,
@@ -174,17 +174,17 @@ class SingleEvaluator(object):
 
         ####### Concepts #################################
         if key:
-            golCon = {t for t in doc1.tags.values() if t.ttype == key}
-            sys1Con = {t for t in doc2.tags.values() if t.ttype == key}
-            sys2Con = {t for t in doc3.tags.values() if t.ttype == key}
-            sys1Con_check = {t for t in doc2.tags.values() if t.ttype == key}
-            sys2Con_check = {t for t in doc3.tags.values() if t.ttype == key}
+            golCon = {t for t in list(doc1.tags.values()) if t.ttype == key}
+            sys1Con = {t for t in list(doc2.tags.values()) if t.ttype == key}
+            sys2Con = {t for t in list(doc3.tags.values()) if t.ttype == key}
+            sys1Con_check = {t for t in list(doc2.tags.values()) if t.ttype == key}
+            sys2Con_check = {t for t in list(doc3.tags.values()) if t.ttype == key}
         else:
-            golCon = {t for t in doc1.tags.values()}
-            sys1Con = {t for t in doc2.tags.values()}
-            sys2Con = {t for t in doc3.tags.values()}
-            sys1Con_check = {t for t in doc2.tags.values()}
-            sys2Con_check = {t for t in doc3.tags.values()}
+            golCon = {t for t in list(doc1.tags.values())}
+            sys1Con = {t for t in list(doc2.tags.values())}
+            sys2Con = {t for t in list(doc3.tags.values())}
+            sys1Con_check = {t for t in list(doc2.tags.values())}
+            sys2Con_check = {t for t in list(doc3.tags.values())}
 
         #pare down matches -- if multiple system tags overlap with only one
         #gold standard tag, only keep one sys tag
@@ -267,17 +267,17 @@ class SingleEvaluator(object):
     
         ####### Relations #################################
         if key:
-            golRel = [r for r in doc1.relations.values() if r.rtype == key]
-            sys1Rel = [r for r in doc2.relations.values() if r.rtype == key]
-            sys2Rel = [r for r in doc3.relations.values() if r.rtype == key]
-            sys1Rel_check = [r for r in doc2.relations.values() if r.rtype == key]
-            sys2Rel_check = [r for r in doc3.relations.values() if r.rtype == key]
+            golRel = [r for r in list(doc1.relations.values()) if r.rtype == key]
+            sys1Rel = [r for r in list(doc2.relations.values()) if r.rtype == key]
+            sys2Rel = [r for r in list(doc3.relations.values()) if r.rtype == key]
+            sys1Rel_check = [r for r in list(doc2.relations.values()) if r.rtype == key]
+            sys2Rel_check = [r for r in list(doc3.relations.values()) if r.rtype == key]
         else:
-            golRel = [r for r in doc1.relations.values()]
-            sys1Rel = [r for r in doc2.relations.values()]
-            sys2Rel = [r for r in doc3.relations.values()]
-            sys1Rel_check = [r for r in doc2.relations.values()]
-            sys2Rel_check = [r for r in doc3.relations.values()]
+            golRel = [r for r in list(doc1.relations.values())]
+            sys1Rel = [r for r in list(doc2.relations.values())]
+            sys2Rel = [r for r in list(doc3.relations.values())]
+            sys1Rel_check = [r for r in list(doc2.relations.values())]
+            sys2Rel_check = [r for r in list(doc3.relations.values())]
 
         #pare down matches -- if multiple system tags overlap with only one
         #gold standard tag, only keep one sys tag
@@ -452,14 +452,14 @@ class Corpora(object):
             print('ERROR: None of the files match.')
         else:
             if files1 - common_files:
-                print('Files skipped in {}:'.format(self.folder1))
-                print(', '.join(sorted(list(files1 - common_files))))
+                print(('Files skipped in {}:'.format(self.folder1)))
+                print((', '.join(sorted(list(files1 - common_files)))))
             if files2 - common_files:
-                print('Files skipped in {}:'.format(self.folder2))
-                print(', '.join(sorted(list(files2 - common_files))))
+                print(('Files skipped in {}:'.format(self.folder2)))
+                print((', '.join(sorted(list(files2 - common_files)))))
             if files3 - common_files:
-                print('Files skipped in {}:'.format(self.folder3))
-                print(', '.join(sorted(list(files3 - common_files))))
+                print(('Files skipped in {}:'.format(self.folder3)))
+                print((', '.join(sorted(list(files3 - common_files)))))
         self.docs = []
         for file in common_files:
             g = RecordTrack2(os.path.join(self.folder1, file))

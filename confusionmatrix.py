@@ -204,7 +204,7 @@ class ConfusionMatrix(dict):
         
     def __str__(self):
         if self.light: raise LightError('Attribute unavailable: reason: ConfusionMatrix in light mode')
-        labelpool = list(set(self.freq_training.keys() + self._np + self._ng))
+        labelpool = list(set(list(self.freq_training.keys()) + self._np + self._ng))
         labelpool.sort()
         if None in labelpool:
             labelpool.remove(None)
@@ -222,7 +222,7 @@ class ConfusionMatrix(dict):
         N+=1
 
         # The width of the columns
-        s = max([max([0]+[len(l) for l in labels if isinstance(l, (str, unicode))]+[len(str(x)) for x in self.columntotals.values()]), 7])
+        s = max([max([0]+[len(l) for l in labels if isinstance(l, str)]+[len(str(x)) for x in list(self.columntotals.values())]), 7])
         format = '    '.join(['%%%ds' %(s+2)]+['%%%ds' %(s) for i in range(N-1)]+['| %%%ds' %(s)])
         format = '%s   '+format
         # The first lines
@@ -241,10 +241,10 @@ class ConfusionMatrix(dict):
             if glabel is None:
                 line=['* |']
             else:
-                line = [unicode(glabel)+' |']
+                line = [str(glabel)+' |']
             for plabel in labelpool:
-                if glabel in self.keys():
-                    if plabel in self[glabel].keys():
+                if glabel in list(self.keys()):
+                    if plabel in list(self[glabel].keys()):
                         v = str(self[glabel][plabel])
                     else:
                         v = '0'
@@ -351,12 +351,12 @@ class ConfusionMatrix(dict):
         
         # Fill
         if g == p:
-            cache_key = u'tp_'+unicode(p)
+            cache_key = 'tp_'+str(p)
             self.cached[cache_key] = self.cached.get(cache_key, 0) + 1
         else:
-            cache_key = u'fp_'+unicode(p)
+            cache_key = 'fp_'+str(p)
             self.cached[cache_key] = self.cached.get(cache_key, 0) + 1
-            cache_key = u'fn_'+unicode(g)
+            cache_key = 'fn_'+str(g)
             self.cached[cache_key] = self.cached.get(cache_key, 0) + 1
          
         if p not in self.cached['observed_labels']:
@@ -400,12 +400,12 @@ class ConfusionMatrix(dict):
         # True pos
         for p in pred:
             if p in gold:
-                cache_key = u'tp_'+unicode(p)
+                cache_key = 'tp_'+str(p)
                 self.cached[cache_key] = self.cached.get(cache_key, 0) + 1
                 gold.remove(p)
                 if p not in self.cached['goldlabels']: self.cached['goldlabels'].append(p)
             else:
-                cache_key = u'fp_'+unicode(p)
+                cache_key = 'fp_'+str(p)
                 self.cached[cache_key] = self.cached.get(cache_key, 0) + 1
                 
             if p not in self.cached['observed_labels']:
@@ -415,7 +415,7 @@ class ConfusionMatrix(dict):
         
         # False neg
         for g in gold:
-            cache_key = u'fn_'+unicode(g)
+            cache_key = 'fn_'+str(g)
             self.cached[cache_key] = self.cached.get(cache_key, 0) + 1
             
             if g not in self.cached['observed_labels']:
@@ -446,7 +446,7 @@ class ConfusionMatrix(dict):
             for e in g:
                 if isinstance(e, str):
                     e = e.decode(self.encoding)
-                elif isinstance(e, (unicode, int, float)) or e is None:
+                elif isinstance(e, (str, int, float)) or e is None:
                     pass
                 else:
                     raise TypeError('labels should be unicode objects, None, float or integers: %s (%s)' %(str(e), type(e)))
@@ -460,7 +460,7 @@ class ConfusionMatrix(dict):
             for e in p:
                 if isinstance(e, str):
                     e = e.decode(self.encoding)
-                elif isinstance(e, (unicode, int, float)) or e is None:
+                elif isinstance(e, (str, int, float)) or e is None:
                     pass
                 else:
                     raise TypeError('labels should be unicode objects, None, float or integers')
@@ -484,7 +484,7 @@ class ConfusionMatrix(dict):
         cache=[]
         for g in gold:
             if inside(g, pred):
-                if not inside(g, self.keys()):
+                if not inside(g, list(self.keys())):
                     self[g]={g:Count(1,1)}
                 else:
                     self[g][g] = self[g].get(g, Count()) + 1
@@ -500,8 +500,8 @@ class ConfusionMatrix(dict):
             g = gold[0]
             p = pred[0]
             
-            if not inside(g, self.keys()): self[g] = {}
-            if inside(p, self[g].keys()):
+            if not inside(g, list(self.keys())): self[g] = {}
+            if inside(p, list(self[g].keys())):
                 self[g][p][ROW] += 1
                 self[g][p][COL] += 1
             else:
@@ -516,9 +516,9 @@ class ConfusionMatrix(dict):
         point = 1.0/len(pred2)
         if not point%1: point = int(point)
         for g in gold:
-            if not inside(g, self.keys()): self[g] = {}
+            if not inside(g, list(self.keys())): self[g] = {}
             for p in pred2:
-                if inside(p, self[g].keys()):
+                if inside(p, list(self[g].keys())):
                     self[g][p][ROW] += point
                 else:
                     self[g][p] = Count(row=point)
@@ -532,8 +532,8 @@ class ConfusionMatrix(dict):
         if not point%1: point = int(point)
         for p in pred:
             for g in gold:
-                if inside(g, self.keys()):
-                    if inside(p, self[g].keys()):
+                if inside(g, list(self.keys())):
+                    if inside(p, list(self[g].keys())):
                         self[g][p][COL] += point
                     else:
                         self[g][p] = Count(col=point)
@@ -553,7 +553,7 @@ class ConfusionMatrix(dict):
         for l in g:
             if isinstance(l, str):
                 l = l.decode(self.encoding)
-            elif isinstance(l, (unicode, int, float)):
+            elif isinstance(l, (str, int, float)):
                 pass
             else:
               raise TypeError('labels should be unicode objects')
@@ -567,7 +567,7 @@ class ConfusionMatrix(dict):
         Depends on the strict setting and whether training counts are set.
         '''
         if self.freq_training:
-            l = self.freq_training.keys()
+            l = list(self.freq_training.keys())
             l.sort()
             if None in l:
                 l.remove(None)
@@ -582,7 +582,7 @@ class ConfusionMatrix(dict):
     def observed_labels(self):
         '''Returns all labels that are observed in the test corpus, 
         irrespective of the fact if it comes from gold-standard or prediction'''
-        if 'observed_labels' not in self.cached.keys():
+        if 'observed_labels' not in list(self.cached.keys()):
             out=set(self.g + self.p)
             out = list(out)
             out.sort()
@@ -595,37 +595,37 @@ class ConfusionMatrix(dict):
             if self.cached:
                 self.cached['observed_labels']=out
             
-        if 'observed_labels' in self.cached.keys(): return self.cached['observed_labels']
+        if 'observed_labels' in list(self.cached.keys()): return self.cached['observed_labels']
         return out
             
     @property
     def freq_training(self):
         '''The relative frequencies of label in the training corpus.
         '''
-        if 'freq_training' not in self.cached.keys():
+        if 'freq_training' not in list(self.cached.keys()):
             # The total number of labels
             if self.compute_none:
                 total = sum(self._freq.values())
             else:
-                total=sum([v for k,v in self._freq.items() if k is not None])
+                total=sum([v for k,v in list(self._freq.items()) if k is not None])
             
             # The relative frequencies
             out={}
-            for l, v in self._freq.items():
+            for l, v in list(self._freq.items()):
                 if not self.compute_none:
                     if l is None: continue
                 out[l] = float(v)/total
                 
             if self.cached: self.cached['freq_training']=out
                 
-        if 'freq_training' in self.cached.keys(): return self.cached['freq_training']
+        if 'freq_training' in list(self.cached.keys()): return self.cached['freq_training']
         return out
             
     @property
     def freq_test(self):
         '''The relative frequencies of labels in the test corpus.
         '''
-        if 'freq_test' not in self.cached.keys():
+        if 'freq_test' not in list(self.cached.keys()):
             out={}
                 
             total = 0
@@ -634,12 +634,12 @@ class ConfusionMatrix(dict):
                     if l is None: continue
                 out[l] = float(self.tp(l)+self.fn(l))
                 total += (self.tp(l)+self.fn(l))
-            for k, v in out.items():
+            for k, v in list(out.items()):
                 out[k] = v/total
                 
             if self.cached: self.cached['freq_test'] = out
 
-        if 'freq_test' in self.cached.keys(): return self.cached['freq_test']
+        if 'freq_test' in list(self.cached.keys()): return self.cached['freq_test']
         return out
             
     @property
@@ -648,7 +648,7 @@ class ConfusionMatrix(dict):
         This equals the number of times a label occurs in de test reference.'''
         if self.light: raise LightError('Attribute unavailable: reason: ConfusionMatrix in light mode')
         key = 'rowtotals'
-        if key not in self.cached.keys():
+        if key not in list(self.cached.keys()):
             out={}
             
             labels = self.observed_labels[:]
@@ -657,7 +657,7 @@ class ConfusionMatrix(dict):
             for l in labels:
                 try:
                     value = 0
-                    for k,count in self[l].items():
+                    for k,count in list(self[l].items()):
                         value = value + count.row
                     out[l] = value
                 except KeyError:
@@ -665,7 +665,7 @@ class ConfusionMatrix(dict):
             
             if self.cached: self.cached[key] = out
         
-        if key in self.cached.keys(): return self.cached[key]
+        if key in list(self.cached.keys()): return self.cached[key]
         return out
         
     @property
@@ -674,7 +674,7 @@ class ConfusionMatrix(dict):
         This equals the number of times a label occurs in de test prediction.'''
         if self.light: raise LightError('Attribute unavailable: reason: ConfusionMatrix in light mode')
         key = 'coltotals'
-        if key not in self.cached.keys():
+        if key not in list(self.cached.keys()):
             out={}
             
             labels = self.observed_labels[:]
@@ -691,7 +691,7 @@ class ConfusionMatrix(dict):
             
             if self.cached: self.cached[key] = out
         
-        if key in self.cached.keys(): return self.cached[key]
+        if key in list(self.cached.keys()): return self.cached[key]
         return out
             
             
@@ -699,7 +699,7 @@ class ConfusionMatrix(dict):
     def g(self):
         '''All labels in gold-standard'''
         key = 'goldlabels'
-        if key not in self.cached.keys():
+        if key not in list(self.cached.keys()):
             # Nicer
             out = list(set(self._ng))
             out.sort()
@@ -709,7 +709,7 @@ class ConfusionMatrix(dict):
             
             if self.cached: self.cached[key] = out
             
-        if key in self.cached.keys(): return self.cached[key]
+        if key in list(self.cached.keys()): return self.cached[key]
         return out
                 
     @property
@@ -717,7 +717,7 @@ class ConfusionMatrix(dict):
         '''All labels in predicted'''
         '''All labels in gold-standard'''
         key = 'predlabels'
-        if key not in self.cached.keys():
+        if key not in list(self.cached.keys()):
             out = list(set(self._np))
             out.sort()
             if None in out:
@@ -726,7 +726,7 @@ class ConfusionMatrix(dict):
             
             if self.cached: self.cached[key] = out
             
-        if key in self.cached.keys(): return self.cached[key]
+        if key in list(self.cached.keys()): return self.cached[key]
         return out
 
     @property
@@ -742,18 +742,18 @@ class ConfusionMatrix(dict):
     @property
     def nG(self):
         '''Returns the number of different labels in the training corpus'''
-        return len(self.freq_training.keys())
+        return len(list(self.freq_training.keys()))
         
             
     def tp(self, label):
         '''Returns the true positive of a given label'''
         if isinstance(label, str): label = label.decode(self.encoding)
         
-        cache_key = u'tp_'+unicode(label)
-        if cache_key not in self.cached.keys():
+        cache_key = 'tp_'+str(label)
+        if cache_key not in list(self.cached.keys()):
             tp = 0
-            if label in self.keys():
-                if label in self[label].keys():
+            if label in list(self.keys()):
+                if label in list(self[label].keys()):
                     tp = min([self[label][label].col, self[label][label].row])
                     
             if self.cached: self.cached[cache_key] = tp
@@ -767,10 +767,10 @@ class ConfusionMatrix(dict):
         '''Returns the false positives of a label'''
         if isinstance(label, str): label = label.decode(self.encoding)
         
-        cache_key = u'fp_'+unicode(label)
-        if cache_key not in self.cached.keys():
+        cache_key = 'fp_'+str(label)
+        if cache_key not in list(self.cached.keys()):
             fp = 0
-            for l,scores in self.items():
+            for l,scores in list(self.items()):
                 try:
                     if l == label and type(l) == type(label):
                         # this line is needed if you get predictions like:
@@ -794,11 +794,11 @@ class ConfusionMatrix(dict):
         '''Returns the false negatives of a label'''
         if isinstance(label, str): label = label.decode(self.encoding)
         
-        cache_key = u'fn_'+unicode(label)
-        if cache_key not in self.cached.keys():
+        cache_key = 'fn_'+str(label)
+        if cache_key not in list(self.cached.keys()):
             fn = 0
-            if inside(label, self.keys()):
-                for l,c in self[label].items():
+            if inside(label, list(self.keys())):
+                for l,c in list(self[label].items()):
                     if l == label and type(l) == type(label):
                         # this line is needed if you get predictions like:
                         # GOLD: K_K_K   PRED: K
@@ -825,8 +825,8 @@ class ConfusionMatrix(dict):
         if self.light: raise LightError('Attribute unavailable: reason: ConfusionMatrix in light mode')
         if isinstance(label, str): label = label.decode(self.encoding)
         
-        cache_key = u'tns'
-        if cache_key not in self.cached.keys():
+        cache_key = 'tns'
+        if cache_key not in list(self.cached.keys()):
             # Compute ALL true negatives
             cache={}
             for l in self.observed_labels:
@@ -855,7 +855,7 @@ class ConfusionMatrix(dict):
 
     def _sum_count(self, func):
         cache_key = func.upper()
-        if cache_key not in self.cached.keys():
+        if cache_key not in list(self.cached.keys()):
             count = 0
             
             labels = self.labels[:]
@@ -994,7 +994,7 @@ class ConfusionMatrix(dict):
 def inside(x, l):
     if isinstance(x, str):
         if not x:
-            x = u''
+            x = ''
         #else:
         #    x = x.decode('utf8')
     return bool([k for k in l if k == x and type(k) == type(x)])
@@ -1220,7 +1220,7 @@ def main(test_file, gold_index=-2, pred_index=-1, fsep=None, lsep='_', ignore=[]
       
     # Get the labels to report on
     if training_file:
-        labels = cm.freq_training.keys()
+        labels = list(cm.freq_training.keys())
     else:
         labels = cm.observed_labels
     labels.sort()
@@ -1230,44 +1230,44 @@ def main(test_file, gold_index=-2, pred_index=-1, fsep=None, lsep='_', ignore=[]
       
     # Extra info
     if verbose:
-        print('\n%s\n' %('='*80))
+        print(('\n%s\n' %('='*80)))
         print('STATISTICS')
         
         k=''
         if cm.ng < 10:
-            k = cm.keys()
+            k = list(cm.keys())
             k.sort()
             if None in k: 
                 if compute_none: k.append('*')
                 k.remove(None)
             k= ': '+(', '.join(k)).encode(encoding)
-        print cm.ng, 'different labels in gold-standard of test corpus', k
+        print(cm.ng, 'different labels in gold-standard of test corpus', k)
                 
         k=''
         if cm.np < 10:
             k=set()
-            for v in cm.values(): k.update(v.keys())
+            for v in list(cm.values()): k.update(list(v.keys()))
             k = list(k)
             k.sort()
             if None in k: 
                 if compute_none: k.append('*')
                 k.remove(None)
             k= ': '+(', '.join(k)).encode(encoding)
-        print cm.np, 'different labels in prediction of test corpus   ', k
+        print(cm.np, 'different labels in prediction of test corpus   ', k)
             
         if training_file:
             k=''
             if cm.nG < 10:
-                k=cm.freq_training.keys()
+                k=list(cm.freq_training.keys())
                 k.sort()
                 k= ': '+(', '.join(k)).encode(encoding)
-            print cm.nG, 'different labels in training corpus             ', k
+            print(cm.nG, 'different labels in training corpus             ', k)
         
-        print
+        print()
         ss='TEST CORPUS'
         if training_file:
             ss='TRAINING CORPUS'
-        print 'LABEL FREQUENCIES IN', ss
+        print('LABEL FREQUENCIES IN', ss)
         
         
         for l in labels:
@@ -1288,94 +1288,94 @@ def main(test_file, gold_index=-2, pred_index=-1, fsep=None, lsep='_', ignore=[]
                 v = cm.freq_test.get(l, 0)
                 
             try:
-                print (ff %(pl, v)).encode(encoding)
+                print((ff %(pl, v)).encode(encoding))
             except:
                 raise
         
-        print '\n%s\n' %('='*80)
+        print('\n%s\n' %('='*80))
 
     # Print confusionmatrix
     if print_cm and  not light:
-        print 'CONFUSION MATRIX'
-        print cm
-        print '\n%s\n' %('='*80)
+        print('CONFUSION MATRIX')
+        print(cm)
+        print('\n%s\n' %('='*80))
         
     if print_labels:
         if light:
             # The counts for all seen labels
             format = '    '.join(['%%%ds' %s for i in range(4)])
-            print format %('', 'TP', 'FP', 'FN')
+            print(format %('', 'TP', 'FP', 'FN'))
             for l in labels:
                 pl=l
                 if l is None: pl='*'
-                print (format %(pl+':', cm.tp(l), cm.fp(l), cm.fn(l))).encode(encoding)
+                print((format %(pl+':', cm.tp(l), cm.fp(l), cm.fn(l))).encode(encoding))
                 
             # precision, recall, fscore per label
-            print '\n%s\n' %('='*80)
+            print('\n%s\n' %('='*80))
             format = '    '.join(['%%%ds' %s for i in range(4)])
-            print format %('', 'PREC', 'RECALL', 'F(%.1f)' %beta)
+            print(format %('', 'PREC', 'RECALL', 'F(%.1f)' %beta))
             for l in labels:
                 pl=l
                 if l is None: pl='*'
-                print (format %(pl+':', '%.5f' %cm.precision(l), '%.5f' %cm.recall(l), '%.5f' %cm.fscore(l, beta=beta), )).encode(encoding)
-            print '\n%s\n' %('='*80)
+                print((format %(pl+':', '%.5f' %cm.precision(l), '%.5f' %cm.recall(l), '%.5f' %cm.fscore(l, beta=beta), )).encode(encoding))
+            print('\n%s\n' %('='*80))
         else:
             # The counts for all seen labels
             format = '    '.join(['%%%ds' %s for i in range(5)])
-            print format %('', 'TP', 'FP', 'TN', 'FN')
+            print(format %('', 'TP', 'FP', 'TN', 'FN'))
             for l in labels:
                 pl=l
                 if l is None: pl='*'
-                print (format %(pl+':', cm.tp(l), cm.fp(l), cm.tn(l), cm.fn(l))).encode(encoding)
+                print((format %(pl+':', cm.tp(l), cm.fp(l), cm.tn(l), cm.fn(l))).encode(encoding))
             
             # precision, recall, fscore per label
-            print '\n%s\n' %('='*80)
+            print('\n%s\n' %('='*80))
             format = '    '.join(['%%%ds' %s for i in range(5)])
-            print format %('', 'PREC', 'RECALL', 'F(%.1f)' %beta, 'AUC')
+            print(format %('', 'PREC', 'RECALL', 'F(%.1f)' %beta, 'AUC'))
             for l in labels:
                 pl=l
                 if l is None: pl='*'
-                print (format %(pl+':', '%.5f' %cm.precision(l), '%.5f' %cm.recall(l), '%.5f' %cm.fscore(l, beta=beta), '%.5f' %cm.auc(l))).encode(encoding)
-            print '\n%s\n' %('='*80)
+                print((format %(pl+':', '%.5f' %cm.precision(l), '%.5f' %cm.recall(l), '%.5f' %cm.fscore(l, beta=beta), '%.5f' %cm.auc(l))).encode(encoding))
+            print('\n%s\n' %('='*80))
       
     # averaged scores
-    print 'MACRO-AVERAGED'
-    print 'PRECISION    : %.5f' %(cm.averaged(level=MACRO, score=PRECISION))
-    print 'RECALL       : %.5f' %(cm.averaged(level=MACRO, score=RECALL))
-    print 'F-SCORE (%2.1f): %.5f' %(beta, cm.averaged(level=MACRO, score=FSCORE, beta=beta))
-    if not light: print 'AUC          : %.5f' %(cm.averaged(level=MACRO, score=AUC, beta=beta))
+    print('MACRO-AVERAGED')
+    print('PRECISION    : %.5f' %(cm.averaged(level=MACRO, score=PRECISION)))
+    print('RECALL       : %.5f' %(cm.averaged(level=MACRO, score=RECALL)))
+    print('F-SCORE (%2.1f): %.5f' %(beta, cm.averaged(level=MACRO, score=FSCORE, beta=beta)))
+    if not light: print('AUC          : %.5f' %(cm.averaged(level=MACRO, score=AUC, beta=beta)))
         
-    print
-    print 'MICRO-AVERAGED USING LABEL FREQUENCIES'
-    print 'PRECISION    : %.5f' %(cm.averaged(level=MICROt, score=PRECISION))
-    print 'RECALL       : %.5f' %(cm.averaged(level=MICROt, score=RECALL))
-    print 'F-SCORE (%2.1f): %.5f' %(beta, cm.averaged(level=MICROt, score=FSCORE, beta=beta))
-    if not light: print 'AUC          : %.5f' %(cm.averaged(level=MICROt, score=AUC, beta=beta))  
+    print()
+    print('MICRO-AVERAGED USING LABEL FREQUENCIES')
+    print('PRECISION    : %.5f' %(cm.averaged(level=MICROt, score=PRECISION)))
+    print('RECALL       : %.5f' %(cm.averaged(level=MICROt, score=RECALL)))
+    print('F-SCORE (%2.1f): %.5f' %(beta, cm.averaged(level=MICROt, score=FSCORE, beta=beta)))
+    if not light: print('AUC          : %.5f' %(cm.averaged(level=MICROt, score=AUC, beta=beta)))  
     
-    print
-    print 'MICRO-AVERAGED'
-    print 'PRECISION    : %.5f' %(cm.averaged(level=MICRO, score=PRECISION, beta=beta))
-    print 'RECALL       : %.5f' %(cm.averaged(level=MICRO, score=RECALL, beta=beta))
-    print 'F-SCORE (%2.1f): %.5f' %(beta, cm.averaged(level=MICRO, score=FSCORE, beta=beta))
-    if not light: print 'AUC          : %.5f' %(cm.averaged(level=MICRO, score=AUC, beta=beta))
+    print()
+    print('MICRO-AVERAGED')
+    print('PRECISION    : %.5f' %(cm.averaged(level=MICRO, score=PRECISION, beta=beta)))
+    print('RECALL       : %.5f' %(cm.averaged(level=MICRO, score=RECALL, beta=beta)))
+    print('F-SCORE (%2.1f): %.5f' %(beta, cm.averaged(level=MICRO, score=FSCORE, beta=beta)))
+    if not light: print('AUC          : %.5f' %(cm.averaged(level=MICRO, score=AUC, beta=beta)))
 
     if verbose:
-        print
+        print()
         if training_file:
-            print 'INFO: Computing averaged scores using training corpus'
+            print('INFO: Computing averaged scores using training corpus')
         else:
-            print 'INFO: Computing averaged scores only using test corpus'
+            print('INFO: Computing averaged scores only using test corpus')
     
     # Accuracy  
-    print '\n%s\n' %('='*80)
-    print 'ACCURACY     : %.5f (%d out of %d)' %(cm.accuracy(), cm.correct, cm.total)
+    print('\n%s\n' %('='*80))
+    print('ACCURACY     : %.5f (%d out of %d)' %(cm.accuracy(), cm.correct, cm.total))
         
-    print '\n%s\n' %('='*80)
+    print('\n%s\n' %('='*80))
       
     return cm
       
 def print_info():
-    print >>sys.stderr, '''INFORMATION ON THE CALCULATION
+    print('''INFORMATION ON THE CALCULATION
     
 1. SINGLE LABEL
     Each instance has one and exactly one label.
@@ -1491,11 +1491,11 @@ def print_info():
     
     Most of the time, all training labels are in the gold-standard of the test set and strict/non-strict
     is not an issue.
-    '''
+    ''', file=sys.stderr)
           
               
 def _usage():
-    print >>sys.stderr, '''Compute evaluation statistics (version %s)
+    print('''Compute evaluation statistics (version %s)
     
 The script reports on:
     - true positive, false positive, true negative and false negative counts for each label.
@@ -1631,7 +1631,7 @@ ACKNOWLEDGEMENTS
 SEE ALSO
     http://www.clips.ua.ac.be/~vincent/pdf/microaverage.pdf
 
-%s, %s''' %(__version__, __date__, __author__)
+%s, %s''' %(__version__, __date__, __author__), file=sys.stderr)
     
     
 
@@ -1731,7 +1731,7 @@ if __name__ == '__main__':
         sys.exit(1)
         
     if lsep == fsep:
-        print >>sys.stderr, 'ERROR: fsep cannot be the same as lsep'
+        print('ERROR: fsep cannot be the same as lsep', file=sys.stderr)
         sys.exit(1)
         
     test_file = args[0]
