@@ -475,12 +475,10 @@ def main(f1, f2, f3, outDir, mode='strict'):
         evaluate(corpora, outDir, mode)
     
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='n2c2: Evaluation script for Track 2')
-    parser.add_argument('folder1', help='First data folder path (gold)')
-    parser.add_argument('folder2', help='Second data folder path (system1)')
-    parser.add_argument('folder3', help='Third data folder path (system2)')
-    parser.add_argument('outDir', help='Fourth data folder path (output)')
-    args = parser.parse_args()
-    main(os.path.abspath(args.folder1), os.path.abspath(args.folder2), os.path.abspath(args.folder3), os.path.abspath(args.outDir),'lenient')
+parser = argparse.ArgumentParser(description='n2c2: Evaluation script for Track 2')
+parser.add_argument('folder1', help='First data folder path (gold)')
+parser.add_argument('folder2', help='Second data folder path (system1)')
+parser.add_argument('folder3', help='Third data folder path (system2)')
+parser.add_argument('outDir', help='Fourth data folder path (output)')
+args = parser.parse_args()
+main(os.path.abspath(args.folder1), os.path.abspath(args.folder2), os.path.abspath(args.folder3), os.path.abspath(args.outDir),'lenient')

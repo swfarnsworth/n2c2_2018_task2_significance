@@ -85,7 +85,7 @@ def subsets(l, r):
     l: a list
     r: an integer (length of the subset)
     '''
-    for c in combinations(len(l), r):
+    for c in combinations(l, r):
         yield tuple([l[x] for x in c])
 
 

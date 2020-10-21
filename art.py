@@ -68,7 +68,6 @@ def fread(fname, index=None, sep=None, encoding='utf8'):
         for l in f:
             line = l.strip()
             if line:
-                line = line.decode(encoding)
                 if index is None:
                     output.append(line)
                 else:
@@ -88,7 +87,7 @@ def strata_read(fname, sep=None, encoding='utf8'):
     out={}
     with open(os.path.abspath(os.path.expanduser(fname)), 'rU') as f:
         for l in f:
-            line = l.strip().decode(encoding)
+            line = l.strip()
             if line:
                 parts = line.split(sep)
                 stratum = parts[0]
@@ -917,310 +916,161 @@ probability from Yeh is 1 - 0.97995 = 0.02005
 
 # ==================================================================================================================
 
-if __name__ == '__main__':
-    def _usage():
-        print('''Approximate Randomization testing (version %s))
-        
-This script can be used to assess the significance for differences in recall, precision,
-f-score, and accuracy for two machine learner outputs.
+try:
+    opts,args=getopt.getopt(sys.argv[1:],'hHc:s:vn:t:T:ram', ['help', 'yeh'])
+except getopt.GetoptError:
+    # print help information and exit:
+    print('o no')
+    sys.exit(2)
 
-The H0 hypothesis tested is:
-    There is no difference between SYSTEM1 and SYSTEM2 for a given score.
+sep=None
+gold = None
+verbose=False
+N=10000
+exact_threshold=10
+trainingfile = None
+training=None
+terms=False
+absolute=True
+mbt=False
 
-This hypothesis is tested for: macro-av. recall, macro-av. precision, macro-av. f-score, micro-av. f-score, and accuracy.
-
-The output is a set of probabilities for accepting H0. If this probability is lower
-than a predefined level (e.g. 0.05) then H0 is rejected.
-
-        
-USAGE
-    ./art.py [-m] [-n int] [-c <gold-standard>] [-s sep] [-t int] [-T training] [-r] [-a] [-h] [-H] [-v] <output_a> <output_b>
-        
-OPTIONS
-    -n : Number of shuffles (default: 10000)
-    -c : Change the expected format for the input files, see FORMAT below
-    -s : Feature separator (default: whitespace)
-    -t : Define the maximal number of instances that can be in the input files
-         for exact randomization. The lower this value, the quicker approximate
-         randomization is carried out. If set to 0, approximation is always
-         carried out. Note that exact randomization for input files with
-         only 10 instances can already take a long time. (default: 10)
-    -T : Path to the training file used by both systems, see TRAINING below
-         
-    -r : term extraction significance testing instead of labeling significance
-         testing, see TERM EXTRACTION below. -c is mandatory; -T is ignored
-    -a : use the actual difference instead of the absolute difference when
-         calculating test extraction significance
-         
-    -m : test for MBT experiments, see MBT below. -c is obligatory.
-         
-    -h : Print help
-    -H : Print more background information
-    -v : Verbose processing
-
-FORMAT
-    Per default, the script expects 2 instance files tagged with
-    different classifiers. 
-    - Each instance should be on a new line.
-    - All features and class labels should be separated with the feature
-      separator. This can be set with the -s option.
-    - An instance is a list of features; followed by the gold standard class label;
-      followed by the class label as predicted by the classifier (=standard Timbl output)
-    
-    If option -c is set, an extra input file with the gold-standard class labels
-    should be provided. The format of all input files should be:
-     - one class label per new line (and nothing else)
-     - class labels belonging to the same instance should
-       be on the same line in all 3 input files.
-           
-VALIDITY
-    If scipy (www.scipy.org) is available and -v is set, the sign-test probability is also reported when
-    carrying out approximate randomization. This probability can be compared with the reported probability
-    for "accuracy" to check the validity of the randomization method. Both probabilities should be similar
-    or should at least lead to similar conclusions; otherwise you might consider increasing the number of
-    shuffles with option -n. Another validity check is rerunning the randomization test and comparing the
-    results.
-    
-    The test carried out by the two-sided paired sign-test is:
-        H0: The number of correct predictions from SYSTEM1 that are incorrectly predicted by SYSTEM2
-            equals the number of correct predictions from SYSTEM2 that are incorrectly predicted by
-            SYSTEM1. (Predictions that are correct or incorrect for both systems are ignored.) 
-    H0 is rejected if the reported sign-test probability is lower than a predefined level.
-      
-TRAINING
-    Macro- and micro-averaging is carried out by taking the class counts from the input files. If not every class
-    from the original training file occurs in the input files to the same extend, then the reported averaged scores
-    may differ from the scores from Timbl.
-    
-    This averaging difference can be solved by supplying the training file with the -T option. The same training file
-    should be used by both systems.
-    When the -c option is set, the format of supplied file should be the same as the input files (only class labels);
-    if -c is not set, the supplied training file should contain instances but without predicted class labels, only
-    the gold standards labels.
-    
-    Because setting and not setting the -T option influences the way the performance scores are computed, this also 
-    influences the reported probabilities.
-    
-    See also from confusionmatrix.py: $ python confusionmatrix.py -V
-    
-TERM EXTRACTION
-    The default setup is to compute the significance for Timbl style output. Is is possible to use this script
-    to calculate significance for term extraction. The -r option should be set. In this mode, the script
-    expects 3 files: gold_standard, system1, system2. All files should contain terms; each term on a new line.
-    It is not required that the number of extracted terms is the same for both systems, nor should it be
-    the same as the number of gold standard terms.
-    
-    By default, the test statistic is the absolute difference of the performance from system1 and system2.
-    If the -a option is set, the test statistic is the signed difference.
-    
-    The -ar mode is identical of the system described by Yeh, 2000, Section3.3. To reproduce the results:
-    
-      To create the files:
-      $ python art.py --yeh
-      To run the randomization:
-      $ python art.py -ar -v -n1048576 -c yeh.gold yeh.s1 yeh.s2
-      
-    For precision, the probability is (1 - reported_probability) because system2 has a higher precision than
-    system1.
-
-MBT
-    It is also possible to process files in the MBT format. An MBT command looks like this:
-    
-    $ Mbt -s training1.settings -T testfile > output1
-    $ Mbt -s training2.settings -T testfile > output2    
-    
-    If is now possible to test the significance of the accuracy:
-    
-    $ python art.py -m -c testfile output1 output2
-    
-    The probability computation is carried out in the same way as with the basic command for instance files 
-    except that the "instances" in the case of Mbt are complete sentences -- there is no shuffling at the
-    token level because there are interdependencies between the token labels. 
-    
-STRATIFIED SHUFFLING
-    It is also possible to reproduce the stratified shuffling example of Noreen 1989 (Section 2.7):
-    
-    $ ./art.py -v -n 999 transfer.data
-    
-    In which the format of transfer.data is 'stratum group values', like:
-        A transfer 2.0 3.0 2.2 2.1 2.2
-        A non-transfer 3.2 2.9 2.0 2.2 2.1 1.4
-        ...
-    
-    This option can also be used for the example in Section 2.1. Using ony one stratum.
-    
-NOTE
-    No assumptions are made on the distribution of the performance scores. The only assumption that is made is
-    that there are no inter-instance dependencies, i.e. knowing the class label of 1 instance should not help
-    knowing the class label of another instance. This assumption is violated in the output from the memory-based
-    tagger (MBT). This is the reason why the -m option shuffles at sentence level instead of token level.
-    
-DEPENDENCIES
-    This script depends on confusionmatrix.py and combinations.py (www.clips.ua.ac.be/~vincent/software.html)
-    and optionally scipy (www.scipy.org).
-    
-REFERENCES
-    Eric W. Noreen, Computer-intensive Methods for Testing Hypotheses: An Introduction, John Wiley & Sons, New York, NY, USA, 1989.
-    Alexander Yeh, More accurate tests for the statistical significance of result differences, in: Proceedings of the 18th International Conference on Computational Linguistics, Volume 2, pages 947-953, 2000.
-
-%s, %s
-''')
-         
-    try:
-        opts,args=getopt.getopt(sys.argv[1:],'hHc:s:vn:t:T:ram', ['help', 'yeh'])
-    except getopt.GetoptError:
-        # print help information and exit:
-        _usage()
+for o, a in opts:
+    if o in ('-h', '--help'):
+        sys.exit()
+    if o in ('-H',):
         sys.exit(2)
-        
-    sep=None
-    gold = None
-    verbose=False
-    N=10000
-    exact_threshold=10
-    trainingfile = None
-    training=None
-    terms=False
-    absolute=True
-    mbt=False
-
-    for o, a in opts:
-        if o in ('-h', '--help'):
-            _usage()
-            sys.exit()
-        if o in ('-H',):
-            sys.exit(2)
-        if o in ('-s',):
-            sep = a
-            if sep == '\\t': sep='\t'
-        if o in ('-c',):
-            gold = a
-        if o in ('-v',):
-            verbose = True
-        if o in ('-n',):
-            N = int(a)
-        if o in ('-t',):
-            exact_threshold = int(a)
-        if o in ('-T',):
-            trainingfile = a
-        if o in ('-r',):
-            terms = True
-        if o in ('-a',):
-            absolute = False
-        if o in ('-m',):
-            mbt = True
-        if o in ('--yeh',):
-            Yeh()
-            sys.exit(0)
-            
-    if len(args) == 1:
-        data = strata_read(args[0], sep=sep)
-        loginfo('-'*50)
-        loginfo('Datafile: %s' %os.path.basename(args[0]))
-        main3(data, verbose=verbose, N=N)
+    if o in ('-s',):
+        sep = a
+        if sep == '\\t': sep='\t'
+    if o in ('-c',):
+        gold = a
+    if o in ('-v',):
+        verbose = True
+    if o in ('-n',):
+        N = int(a)
+    if o in ('-t',):
+        exact_threshold = int(a)
+    if o in ('-T',):
+        trainingfile = a
+    if o in ('-r',):
+        terms = True
+    if o in ('-a',):
+        absolute = False
+    if o in ('-m',):
+        mbt = True
+    if o in ('--yeh',):
+        Yeh()
         sys.exit(0)
-    elif len(args) != 2:
-        _usage()
-        sys.exit(1)
-            
-    # The files with the systems
-    output1, output2 = args
+
+if len(args) == 1:
+    data = strata_read(args[0], sep=sep)
+    loginfo('-'*50)
+    loginfo('Datafile: %s' %os.path.basename(args[0]))
+    main3(data, verbose=verbose, N=N)
+    sys.exit(0)
+elif len(args) != 2:
+    sys.exit(1)
+
+# The files with the systems
+output1, output2 = args
 
 
-    if terms and not gold:
-        print('ERROR 2: when doing term significance testing a gold standard is needed (-c option)')
-        sys.exit(1)
+if terms and not gold:
+    print('ERROR 2: when doing term significance testing a gold standard is needed (-c option)')
+    sys.exit(1)
 
-    if mbt and not gold:
-        print('ERROR 3: when doing MBT significance testing a gold standard is needed (-c option)')
-        sys.exit(1)
+if mbt and not gold:
+    print('ERROR 3: when doing MBT significance testing a gold standard is needed (-c option)')
+    sys.exit(1)
 
-    # Reading in the class labels 
-    if gold:
-        if mbt:
-            goldlabels = mbtread(gold)
-            system1 = mbtread(output1)
-            system2 = mbtread(output2)
-        else:
-            if trainingfile: training = readtraining(trainingfile, sep=sep, index=None)
-
-            goldlabels = fread(gold, index=None)
-            system1 =  fread(output1, index=None)
-            system2 =  fread(output2, index=None)    
+# Reading in the class labels
+if gold:
+    if mbt:
+        goldlabels = mbtread(gold)
+        system1 = mbtread(output1)
+        system2 = mbtread(output2)
     else:
-        if trainingfile: training = readtraining(trainingfile, sep=sep, index=-1)
-    
-        try:
-            goldlabels = fread(output1, index=-2, sep=sep)
-        except IndexError:
-            print(('ERROR 4: Is the feature separator set correctly? (option -s is currently "%s")' %str(sep)))
-            sys.exit(1)
-        check = fread(output2, index=-2, sep=sep)
-        
-        if check != goldlabels:
-            print((check, goldlabels))
-            print(('ERROR 5: File %s and %s should have the same gold reference labels.' %(output1, output2)))
-            sys.exit(1)
-        del check
-        
-        check1 = fread(output1, index=(0,-1), sep=sep)
-        check2 = fread(output2, index=(0,-1), sep=sep)
-        
-        if check1 != check2:
-            print(('ERROR 5: File %s and %s should be exactly the same up until the predicted class label.' %(output1, output2)))
-            sys.exit(1)
-        del check1, check2
-            
-        system1=fread(output1, index=-1, sep=sep)
-        system2=fread(output2, index=-1, sep=sep)
-        
-    # Info
-    if verbose:
-        loginfo('-'*50)
-        loginfo('SYSTEM1 :%s' %output1)
-        loginfo('SYSTEM2 :%s' %output2)
-        if mbt:
+        if trainingfile: training = readtraining(trainingfile, sep=sep, index=None)
+
+        goldlabels = fread(gold, index=None)
+        system1 =  fread(output1, index=None)
+        system2 =  fread(output2, index=None)
+else:
+    if trainingfile: training = readtraining(trainingfile, sep=sep, index=-1)
+
+    try:
+        goldlabels = fread(output1, index=-2, sep=sep)
+    except IndexError:
+        print(('ERROR 4: Is the feature separator set correctly? (option -s is currently "%s")' %str(sep)))
+        sys.exit(1)
+    check = fread(output2, index=-2, sep=sep)
+
+    if check != goldlabels:
+        print((check, goldlabels))
+        print(('ERROR 5: File %s and %s should have the same gold reference labels.' %(output1, output2)))
+        sys.exit(1)
+    del check
+
+    check1 = fread(output1, index=(0,-1), sep=sep)
+    check2 = fread(output2, index=(0,-1), sep=sep)
+
+    if check1 != check2:
+        print(('ERROR 5: File %s and %s should be exactly the same up until the predicted class label.' %(output1, output2)))
+        sys.exit(1)
+    del check1, check2
+
+    system1=fread(output1, index=-1, sep=sep)
+    system2=fread(output2, index=-1, sep=sep)
+
+# Info
+if verbose:
+    loginfo('-'*50)
+    loginfo('SYSTEM1 :%s' %output1)
+    loginfo('SYSTEM2 :%s' %output2)
+    if mbt:
+        loginfo('GOLD    :%s' %gold)
+        loginfo('MBT style formatted files')
+        loginfo('%d sentences in input files' %len(system1))
+    else:
+        if gold:
             loginfo('GOLD    :%s' %gold)
-            loginfo('MBT style formatted files')
-            loginfo('%d sentences in input files' %len(system1))
+            if not terms: loginfo('Considering entire lines as class labels')
         else:
-            if gold:
-                loginfo('GOLD    :%s' %gold)
-                if not terms: loginfo('Considering entire lines as class labels')
-            else:
-                loginfo('Considering the last field as the predicted class label')
-                loginfo('Considering the one but last field as the gold standard class label')
-                if sep is not None: loginfo('Using "%s" as feature separator' %sep)
-            if not terms: loginfo('%d instances in input files' %len(system1))
-        
-        labels=set(goldlabels)
-        labels = labels.union(set(system1))
-        labels = labels.union(set(system2))
-        nlabels = len(labels)
-        labels=list(labels)
-        labels.sort()
-        
-        if not mbt: loginfo('Found %d different labels/terms' %nlabels)
-        if nlabels < 10: loginfo('  %s' %(', '.join(labels)))
-        
-        if trainingfile: loginfo('Computing averaged scores using class label counts from: %s' %trainingfile)
-        
-        loginfo('')
-        loginfo('Computing %d shuffles' %N)
-        loginfo('H0: there is no difference between SYSTEM1 and SYSTEM2')
-        if terms and not absolute: loginfo('H1: SYSTEM1 performs better than SYSTEM2')
-    
-        loginfo('    Commonly, you reject H0 if the probability drops below')
-        loginfo('    a predefined significance level, e.g 0.05.')
-        loginfo('-'*50)
-    
-    
-    
+            loginfo('Considering the last field as the predicted class label')
+            loginfo('Considering the one but last field as the gold standard class label')
+            if sep is not None: loginfo('Using "%s" as feature separator' %sep)
+        if not terms: loginfo('%d instances in input files' %len(system1))
 
-    if gold and mbt:
-        probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbt)
-        #probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbtmulti)
-    elif gold and terms:
-        probs = main2(goldlabels, system1, system2, N=N, verbose=verbose, absolute=absolute, exact_threshold=exact_threshold)
-    else:
-        probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=training) #, scoring=getscoresmbtmulti)
+    labels=set(goldlabels)
+    labels = labels.union(set(system1))
+    labels = labels.union(set(system2))
+    nlabels = len(labels)
+    labels=list(labels)
+    labels.sort()
+
+    if not mbt: loginfo('Found %d different labels/terms' %nlabels)
+    if nlabels < 10: loginfo('  %s' %(', '.join(labels)))
+
+    if trainingfile: loginfo('Computing averaged scores using class label counts from: %s' %trainingfile)
+
+    loginfo('')
+    loginfo('Computing %d shuffles' %N)
+    loginfo('H0: there is no difference between SYSTEM1 and SYSTEM2')
+    if terms and not absolute: loginfo('H1: SYSTEM1 performs better than SYSTEM2')
+
+    loginfo('    Commonly, you reject H0 if the probability drops below')
+    loginfo('    a predefined significance level, e.g 0.05.')
+    loginfo('-'*50)
+
+
+
+
+if gold and mbt:
+    probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbt)
+    #probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=None, scoring=getscoresmbtmulti)
+elif gold and terms:
+    probs = main2(goldlabels, system1, system2, N=N, verbose=verbose, absolute=absolute, exact_threshold=exact_threshold)
+else:
+    probs = main(goldlabels, system1, system2, verbose=verbose, N=N, exact_threshold=exact_threshold, training=training) #, scoring=getscoresmbtmulti)
+
+print('done')
